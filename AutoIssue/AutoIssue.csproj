@@ -7,7 +7,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>Mansiper.AutoIssue</PackageId>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
     <Authors>Pavel Razboynikov</Authors>
     <Description>A library for creating GitHub issues from application feedback data.</Description>
     <PackageTags>github;feedback;issues</PackageTags>

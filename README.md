@@ -1,4 +1,8 @@
-﻿# AutoIssue — GitHub Feedback Bridge
+﻿[![NuGet Version](https://img.shields.io/nuget/v/Mansiper.AutoIssue)](https://www.nuget.org/packages/Mansiper.AutoIssue)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Mansiper.AutoIssue)](https://www.nuget.org/packages/Mansiper.AutoIssue)
+[![License](https://img.shields.io/github/license/Mansiper/AutoIssue.svg)](LICENSE)
+
+# AutoIssue — GitHub Feedback Bridge
 
 A .NET class library that turns website or app feedback into **GitHub issues**, with optional file attachments.
 
