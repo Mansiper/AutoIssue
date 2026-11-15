@@ -1,0 +1,88 @@
+@page "/issue-status"
+@rendermode InteractiveServer
+@using AutoIssue.Enums
+@using AutoIssue.Models
+@using AutoIssue.Services
+@inject IGitHubFeedbackService FeedbackService
+
+<PageTitle>Update Issue Status</PageTitle>
+
+<h1>Update Issue Status</h1>
+
+<p>Open or close a feedback issue.</p>
+
+@if (result is not null)
+{
+    <div class="alert alert-success">
+        Issue <a href="@result.Url" target="_blank" rel="noopener noreferrer">#@result.Number</a>
+        is now <strong>@result.State</strong>@(result.StateReason is not null ? $" ({result.StateReason})" : "").
+    </div>
+}
+else if (error is not null)
+{
+    <div class="alert alert-danger"><strong>Error:</strong> @error</div>
+}
+
+<div class="card shadow-sm mb-4" style="max-width: 400px;">
+    <div class="card-body">
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Issue number</label>
+            <input class="form-control" type="number" min="1" @bind="issueNumber" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Target state</label>
+            <select class="form-select" @bind="targetState">
+                <option value="@IssueState.Open">Open</option>
+                <option value="@IssueState.Closed">Closed</option>
+            </select>
+        </div>
+
+        @if (targetState == IssueState.Closed)
+        {
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Close reason</label>
+                <select class="form-select" @bind="closeReason">
+                    <option value="@IssueCloseReason.Completed">Completed</option>
+                    <option value="@IssueCloseReason.NotPlanned">Not planned</option>
+                </select>
+            </div>
+        }
+
+        <button class="btn btn-primary" @onclick="Update" disabled="@(submitting || issueNumber < 1)">
+            @(submitting ? "Updating…" : "Update Status")
+        </button>
+    </div>
+</div>
+
+@code {
+    private int issueNumber = 1;
+    private IssueState targetState = IssueState.Closed;
+    private IssueCloseReason closeReason = IssueCloseReason.Completed;
+    private bool submitting;
+    private string? error;
+    private FeedbackIssue? result;
+
+    private async Task Update()
+    {
+        submitting = true;
+        error = null;
+        result = null;
+
+        try
+        {
+            result = await FeedbackService.UpdateIssueStatus(
+                issueNumber,
+                targetState,
+                targetState == IssueState.Closed ? closeReason : null);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}

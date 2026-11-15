@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AutoIssue/AutoIssue.csproj" />
+  <Project Path="AutoIssue.Example/AutoIssue.Example.csproj" Id="a924eeab-cd21-4293-bd28-59982e6f4376" />
+  <Project Path="AutoIssue.Tests/AutoIssue.Tests.csproj" />
+</Solution>

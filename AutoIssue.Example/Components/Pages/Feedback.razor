@@ -1,0 +1,156 @@
+﻿@page "/feedback"
+@rendermode InteractiveServer
+@using AutoIssue.Services
+@using AutoIssue.Models
+@using System.ComponentModel.DataAnnotations
+@using AutoIssue.Options
+@using Microsoft.Extensions.Options
+@inject IGitHubFeedbackService FeedbackService
+@inject IOptions<GitHubFeedbackOptions> Options
+
+<PageTitle>Feedback</PageTitle>
+
+<h1>Send Feedback</h1>
+
+<p>Fill in the form below to submit feedback. Files are optional.</p>
+
+@if (submitted && error == null)
+{
+    <div class="alert alert-success">
+        <strong>Thank you!</strong>
+        Issue #@issueNumber created.
+        <a href="@issueUrl" target="_blank" rel="noopener noreferrer">View on GitHub →</a>
+    </div>
+}
+else if (error is not null)
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @error
+    </div>
+}
+
+<div class="card shadow-sm mb-4" style="max-width: 640px;">
+    <div class="card-body">
+        <EditForm Model="form" OnValidSubmit="Submit">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Message <span class="text-danger">*</span>
+                </label>
+                <InputTextArea class="form-control" @bind-Value="form.Message" rows="5"
+                               placeholder="Describe your feedback, bug report, or suggestion." />
+                <ValidationMessage For="() => form.Message" class="text-danger small" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Contact <span class="text-muted fw-normal">(optional)</span>
+                </label>
+                <InputText class="form-control" @bind-Value="form.Contact"
+                           placeholder="E-mail, phone number, or username" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Attachments <span class="text-muted fw-normal">(optional, up to @Options.Value.Attachments.MaxFilesPerFeedback files)</span>
+                </label>
+                <InputFile class="form-control" OnChange="HandleFiles" multiple
+                           accept="@string.Join(",", Options.Value.Attachments.AllowedFileTypes)" />
+                @if (fileErrors.Count > 0)
+                {
+                    <ul class="text-danger mt-1 small mb-0">
+                        @foreach (var e in fileErrors)
+                        {
+                            <li>@e</li>
+                        }
+                    </ul>
+                }
+                @if (attachments.Count > 0)
+                {
+                    <ul class="mt-1 text-muted small mb-0">
+                        @foreach (var a in attachments)
+                        {
+                            <li>@a.FileName (@(a.Content.Length / 1024) KB)</li>
+                        }
+                    </ul>
+                }
+            </div>
+
+            <button type="submit" class="btn btn-primary" disabled="@submitting">
+                @(submitting ? "Sending…" : "Send Feedback")
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private FeedbackFormModel form = new();
+    private readonly List<FeedbackAttachment> attachments = [];
+    private readonly List<string> fileErrors = [];
+    private bool submitting;
+    private bool submitted;
+    private string? error;
+    private int issueNumber;
+    private string? issueUrl;
+
+    private async Task HandleFiles(InputFileChangeEventArgs e)
+    {
+        fileErrors.Clear();
+        attachments.Clear();
+
+        long maxFileSize = Options.Value.Attachments.MaxFileSizeBytes;
+        foreach (var file in e.GetMultipleFiles(Options.Value.Attachments.MaxFilesPerFeedback))
+        {
+            try
+            {
+                using var ms = new MemoryStream();
+                await file.OpenReadStream(maxFileSize).CopyToAsync(ms);
+                attachments.Add(new FeedbackAttachment(file.Name, ms.ToArray()));
+            }
+            catch (Exception ex)
+            {
+                fileErrors.Add($"{file.Name}: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task Submit()
+    {
+        submitting = true;
+        error = null;
+        submitted = false;
+
+        try
+        {
+            var result = await FeedbackService.CreateFeedback(new FeedbackRequest(
+                form.Message,
+                string.IsNullOrWhiteSpace(form.Contact) ? null : form.Contact.Trim(),
+                attachments.Count > 0 ? attachments : null));
+
+            issueNumber = result.Number;
+            issueUrl = result.Url;
+            submitted = true;
+            form = new();
+            attachments.Clear();
+            fileErrors.Clear();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private sealed class FeedbackFormModel
+    {
+        [Required(ErrorMessage = "Message is required.")]
+        [MinLength(1)]
+        public string Message { get; set; } = string.Empty;
+
+        public string? Contact { get; set; }
+    }
+}
