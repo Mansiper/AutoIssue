@@ -1,6 +1,6 @@
 ﻿[![NuGet Version](https://img.shields.io/nuget/v/Mansiper.AutoIssue)](https://www.nuget.org/packages/Mansiper.AutoIssue)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Mansiper.AutoIssue)](https://www.nuget.org/packages/Mansiper.AutoIssue)
-[![License](https://img.shields.io/github/license/Mansiper/AutoIssue.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/Mansiper/AutoIssue)](LICENSE)
 
 # AutoIssue — GitHub Feedback Bridge
 
